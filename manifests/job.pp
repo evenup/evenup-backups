@@ -68,6 +68,8 @@ define backup::job (
   $email_to         = undef,
   $relay_host       = 'localhost',
   $relay_port       = '25',
+  $mail_domain      = undef,
+  $mail_encryption  = undef,
   # Hipchat
   $enable_hc        = false,
   $hc_success       = false,
@@ -228,8 +230,6 @@ define backup::job (
 
     if !$email_to {
       fail("[Backup::Job::${name}]: A destination email address is required for email notifications")
-    } else {
-      validate_re($email_to, '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$', "[Backup::Job::${name}]: ${email_to} is not a valid email address")
     }
 
     if $relay_port and !is_integer($relay_port) {
@@ -415,6 +415,8 @@ define backup::job (
     # - $email_to
     # - $relay_host
     # - $relay_port
+    # - $mail_domain
+    # - $mail_encryption
     concat::fragment { "${_name}_email":
       target  => "/etc/backup/models/${_name}.rb",
       content => template('backup/job/email.erb'),

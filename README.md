@@ -324,6 +324,18 @@ Integer.  Port on `relayhost` emails should be sent to
 
 Default: 25
 
+##### `mail_encryption`
+
+String. Encryption to be used.
+
+Default: not defined (backup currently defaults to `:starttls`.
+
+##### `mail_domain`
+
+String. Your host name for the HELO command.
+
+Default: none.
+
 ##### `enable_hc`
 
 Boolean.  Whether backup job noticies should be sent to HipChat

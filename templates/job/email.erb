@@ -13,4 +13,10 @@
 <% if @relay_host -%>
     mail.port                 = <%= @relay_port %>
 <% end -%>
+<% if @mail_domain -%>
+    mail.domain               = "<%= @mail_domain %>"
+<% end -%>
+<% if @mail_encryption -%>
+    mail.encryption           = <%= @mail_encryption %>
+<% end -%>
   end
