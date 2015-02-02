@@ -230,8 +230,6 @@ define backup::job (
 
     if !$email_to {
       fail("[Backup::Job::${name}]: A destination email address is required for email notifications")
-    } else {
-      validate_re($email_to, '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$', "[Backup::Job::${name}]: ${email_to} is not a valid email address")
     }
 
     if $relay_port and !is_integer($relay_port) {
