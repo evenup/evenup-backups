@@ -415,6 +415,8 @@ define backup::job (
     # - $email_to
     # - $relay_host
     # - $relay_port
+    # - $mail_domain
+    # - $mail_encryption
     concat::fragment { "${_name}_email":
       target  => "/etc/backup/models/${_name}.rb",
       content => template('backup/job/email.erb'),
