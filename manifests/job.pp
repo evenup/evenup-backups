@@ -68,6 +68,8 @@ define backup::job (
   $email_to         = undef,
   $relay_host       = 'localhost',
   $relay_port       = '25',
+  $mail_domain      = undef,
+  $mail_encryption  = undef,
   # Hipchat
   $enable_hc        = false,
   $hc_success       = false,
