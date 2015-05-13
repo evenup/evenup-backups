@@ -18,7 +18,7 @@ class backup::params {
       }
     }
     'Debian': {
-      $package_dependencies = ['ruby-dev', 'libxslt1-dev', 'libxml2-dev', 'g++', 'patch']
+      $package_dependencies = ['ruby-dev', 'libxslt1-dev', 'libxml2-dev', 'g++', 'patch', 'zlib1g-dev']
       if $::lsbmajordistrelease {
         $releaseversion = $::lsbmajordistrelease
       }
