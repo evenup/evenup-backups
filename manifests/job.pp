@@ -460,6 +460,7 @@ define backup::job (
     # Template uses
     # - $aws_access_key
     # - $aws_secret_key
+    # - $use_iam_profile
     # - $path
     # - $aws_region
     # - $bucket
