@@ -3,7 +3,7 @@
   #
   store_with S3 do |s3|
 <% if @use_iam_profile -%>
-    s3.use_iam_profile   = "<%= @use_iam_profile -%>"
+    s3.use_iam_profile   = true
 <% else -%>
     s3.access_key_id     = "<%= @aws_access_key -%>"
     s3.secret_access_key = "<%= @aws_secret_key -%>"
