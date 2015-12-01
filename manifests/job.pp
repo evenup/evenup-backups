@@ -47,6 +47,7 @@ define backup::job (
   # S3
   $aws_access_key      = $::backup::aws_access_key,
   $aws_secret_key      = $::backup::aws_secret_key,
+  $use_iam_profile     = $::backup::use_iam_profile,
   $bucket              = $::backup::bucket,
   $aws_region          = $::backup::aws_region,
   $reduced_redundancy  = $::backup::reduced_redundancy,
@@ -195,13 +196,16 @@ define backup::job (
   # S3
   if $storage_type == 's3' {
     validate_bool($reduced_redundancy)
+    validate_bool($use_iam_profile)
+    
+    if !$use_iam_profile {
+      if !$aws_access_key or !is_string($aws_access_key) {
+        fail("[Backup::Job::${name}]: Parameter aws_access_key is required for S3 storage")
+      }
 
-    if !$aws_access_key or !is_string($aws_access_key) {
-      fail("[Backup::Job::${name}]: Parameter aws_access_key is required for S3 storage")
-    }
-
-    if !$aws_secret_key or !is_string($aws_secret_key) {
-      fail("[Backup::Job::${name}]: Parameter aws_secret_key is required for S3 storage")
+      if !$aws_secret_key or !is_string($aws_secret_key) {
+        fail("[Backup::Job::${name}]: Parameter aws_secret_key is required for S3 storage")
+      }
     }
 
     if !$bucket or !is_string($bucket) {
