@@ -28,6 +28,7 @@ class backup (
   # S3
   $aws_access_key       = $::backup::params::aws_access_key,
   $aws_secret_key       = $::backup::params::aws_secret_key,
+  $use_iam_profile      = $::backup::params::use_iam_profile,
   $bucket               = $::backup::params::bucket,
   $aws_region           = $::backup::params::aws_region,
   # Remote storage common
