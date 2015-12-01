@@ -43,6 +43,7 @@ class backup::params {
   # S3
   $aws_access_key       = undef
   $aws_secret_key       = undef
+  $use_iam_profile      = undef
   $bucket               = undef
   $aws_region           = undef
   $reduced_redundancy   = false
