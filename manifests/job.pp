@@ -58,6 +58,10 @@ define backup::job (
   # FTP
   $ftp_port          = $::backup::ftp_port,
   $ftp_passive_mode  = $::backup::ftp_passive_mode,
+  # rsync
+  $rsync_mode        = $::backup::rsync_mode,
+  $rsync_port        = $::backup::rsync_port,
+  $rsync_compress    = $::backup::rsync_compress,
 
   ## Encryptors
   $encryptor         = $::backup::encryptor,
@@ -173,8 +177,8 @@ define backup::job (
   }
 
   # Storage
-  if !member(['s3', 'local', 'ftp'], $storage_type) {
-    fail("[Backup::Job::${name}]: Currently supported storage types are: ftp, local, and s3")
+  if !member(['s3', 'local', 'ftp', 'rsync'], $storage_type) {
+    fail("[Backup::Job::${name}]: Currently supported storage types are: ftp, local, s3, and rsync")
   }
 
   if $keep and !is_integer($keep) {
@@ -186,7 +190,7 @@ define backup::job (
   }
 
   # local and ftp require path parameter
-  if member(['ftp', 'local'], $storage_type) {
+  if member(['ftp', 'local', 'rsync'], $storage_type) {
     if !$path {
       fail("[Backup::Job::${name}]: Path parameter is required with storage_type => ${storage_type}")
     }
@@ -241,6 +245,27 @@ define backup::job (
     }
 
     validate_bool($ftp_passive_mode)
+  }
+
+  if $storage_type == 'rsync' {
+    if $rsync_mode and !member([
+        'ssh',
+        'ssh_daemon',
+        'rsync_daemon',
+      ], $rsync_mode ) {
+        fail("[Backup::Job::${name}]: ${rsync_mode} is not a valid mode")
+      }
+    if !$storage_host or !is_string($storage_host) {
+      fail("[Backup::Job::${name}]: Parameter storage_host is required for rsync storage")
+    }
+    if !$rsync_port or !is_integer($rsync_port) {
+      fail("[Backup::Job::${name}]: rsync_port must be an integer.  (Got: ${rsync_port})")
+    }
+
+    if $rsync_compress {
+      validate_bool($rsync_compress)
+    }
+
   }
 
   # Encryptor
@@ -477,6 +502,19 @@ define backup::job (
     concat::fragment { "${_name}_ftp":
       target  => "/etc/backup/models/${_name}.rb",
       content => template('backup/job/ftp.erb'),
+      order   => '35',
+    }
+  } elsif $storage_type == 'rsync' {
+    # Template uses
+    # - $server_username
+    # - $server_ip
+    # - $server_port
+    # - $server_compress
+    # - $server_mode
+    # - $path
+    concat::fragment { "${_name}_rsync":
+      target  => "/etc/backup/models/${_name}.rb",
+      content => template('backup/job/rsync.erb'),
       order   => '35',
     }
   }
