@@ -1,0 +1,21 @@
+  ##
+  # rsync [Storage]
+  #
+  store_with RSync do |server|
+<%if @storage_username and (@rsync_mode == 'ssh') -%>
+    server.ssh_user      = "<%= @storage_username -%>"
+<% elsif @storage_username -%>
+    server.rsync_user    = "<%= @storage_username -%>"
+<% end -%>
+    server.host          = "<%= @storage_host -%>"
+<%if @rsync_port -%>
+    server.port          = <%= @rsync_port %>
+<% end -%>
+    server.path          = "<%= @_path -%>"
+<% if @rsync_compress -%>
+    server.compress      = "<%= @rsync_compress %>"
+<% end -%>
+<% if @rsync_mode -%>
+    server.mode          = :<%= @rsync_mode %>
+<% end -%>
+  end

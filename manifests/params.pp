@@ -53,6 +53,10 @@ class backup::params {
   # FTP
   $ftp_port             = 21
   $ftp_passive_mode     = false
+  # rsync
+  $rsync_mode           = undef
+  $rsync_port           = 22
+  $rsync_compress       = undef
 
   ## Encryptors
   $encryptor            = undef

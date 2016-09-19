@@ -346,6 +346,68 @@ describe 'backup::job', :types=> :define do
       end
     end # ftp
 
+    context 'rsync' do
+      context 'bad mode' do
+        let(:params) { {
+          :types            => 'archive',
+          :add              => 'here',
+          :storage_type     => 'rsync',
+          :storage_host     => 'mysite.example.com',
+          :path             => '/there',
+          :rsync_mode       => 'abcde'
+        } }
+        it { expect { is_expected.to compile }.to raise_error(/abcde is not a valid mode/)}
+      end
+
+      context 'missing host' do
+        let(:params) { {
+          :types            => 'archive',
+          :add              => 'here',
+          :storage_type     => 'rsync',
+          :storage_username => 'myuser',
+          :path             => '/there',
+        } }
+        it { expect { is_expected.to compile }.to raise_error(/storage_host is required/)}
+      end
+
+      context 'missing path' do
+        let(:params) { {
+          :types            => 'archive',
+          :add              => 'here',
+          :storage_type     => 'rsync',
+          :storage_username => 'myuser',
+          :storage_host     => 'mysite.example.com',
+        } }
+        it { expect { is_expected.to compile }.to raise_error(/Path parameter is required/)}
+      end
+
+      context 'bad port' do
+        let(:params) { {
+          :types            => 'archive',
+          :add              => 'here',
+          :storage_type     => 'rsync',
+          :storage_username => 'myuser',
+          :storage_host     => 'mysite.example.com',
+          :rsync_port         => 'abcde',
+          :path             => '/there',
+        } }
+        it { expect { is_expected.to compile }.to raise_error(/rsync_port must be an integer/)}
+      end
+
+      context 'bad rsync_compress' do
+        let(:params) { {
+          :types            => 'archive',
+          :add              => 'here',
+          :storage_type     => 'rsync',
+          :storage_username => 'myuser',
+          :storage_host     => 'mysite.example.com',
+          :path             => '/there',
+          :rsync_compress   => 'bob',
+        } }
+        it { expect { is_expected.to compile }.to raise_error(/"bob" is not a boolean/)}
+      end
+    end # rsync
+
     context 'encryptor generic' do
       context 'bad encryptor' do
         let(:params) { {
@@ -1013,6 +1075,40 @@ describe 'backup::job', :types=> :define do
         it { should contain_concat__fragment('job1_ftp').with(:content => /server\.passive_mode\s+=\strue/) }
       end
     end # ftp
+
+    context 'rsync' do
+      context 'minimum settings' do
+        let(:params) { {
+          :types            => 'archive',
+          :add              => '/here',
+          :storage_type     => 'rsync',
+          :storage_host     => 'mysite.example.com',
+          :path             => '/there',
+        } }
+        it { should_not contain_concat__fragment('job1_rsync').with(:content => /server\..+user/) }
+        it { should contain_concat__fragment('job1_rsync').with(:content => /server\.ip\s+=\s"mysite.example.com"/) }
+        it { should contain_concat__fragment('job1_rsync').with(:content => /server\.port\s+=\s22$/) }
+        it { should contain_concat__fragment('job1_rsync').with(:content => /server\.path\s+=\s"\/there"/) }
+        it { should_not contain_concat__fragment('job1_rsync').with(:content => /server\.rsync_compress/) }
+      end
+
+      context 'all params' do
+        let(:params) { {
+          :types            => 'archive',
+          :add              => '/here',
+          :storage_type     => 'rsync',
+          :storage_username => 'myuser',
+          :storage_host     => 'mysite.example.com',
+          :path             => '/there',
+          :rsync_port       => 22,
+          :rsync_mode       => 'ssh',
+          :keep             => 10,
+        } }
+        it { should contain_concat__fragment('job1_rsync').with(:content => /server\..+user\s+=\s"myuser"/) }
+        it { should contain_concat__fragment('job1_rsync').with(:content => /server\.port\s+=\s22/) }
+        it { should contain_concat__fragment('job1_rsync').with(:content => /server\.mode\s+=\s:ssh/) }
+      end
+    end # rsync
 
     context 'logging' do
       context 'no logging' do
