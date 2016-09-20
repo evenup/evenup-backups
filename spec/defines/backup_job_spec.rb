@@ -1086,7 +1086,7 @@ describe 'backup::job', :types=> :define do
           :path             => '/there',
         } }
         it { should_not contain_concat__fragment('job1_rsync').with(:content => /server\..+user/) }
-        it { should contain_concat__fragment('job1_rsync').with(:content => /server\.ip\s+=\s"mysite.example.com"/) }
+        it { should contain_concat__fragment('job1_rsync').with(:content => /server\.host\s+=\s"mysite.example.com"/) }
         it { should contain_concat__fragment('job1_rsync').with(:content => /server\.port\s+=\s22$/) }
         it { should contain_concat__fragment('job1_rsync').with(:content => /server\.path\s+=\s"\/there"/) }
         it { should_not contain_concat__fragment('job1_rsync').with(:content => /server\.rsync_compress/) }
