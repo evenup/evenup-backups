@@ -62,6 +62,7 @@ define backup::job (
   $rsync_mode        = $::backup::rsync_mode,
   $rsync_port        = $::backup::rsync_port,
   $rsync_compress    = $::backup::rsync_compress,
+  $rsync_password_file = $::backup::rsync_password_file,
 
   ## Encryptors
   $encryptor         = $::backup::encryptor,
@@ -258,12 +259,15 @@ define backup::job (
     if !$storage_host or !is_string($storage_host) {
       fail("[Backup::Job::${name}]: Parameter storage_host is required for rsync storage")
     }
-    if !$rsync_port or !is_integer($rsync_port) {
+    if $rsync_port and !is_integer($rsync_port) {
       fail("[Backup::Job::${name}]: rsync_port must be an integer.  (Got: ${rsync_port})")
     }
 
     if $rsync_compress {
       validate_bool($rsync_compress)
+    }
+    if $rsync_password_file {
+      validate_string($rsync_password_file)
     }
 
   }

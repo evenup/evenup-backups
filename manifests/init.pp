@@ -37,6 +37,9 @@ class backup (
   # FTP
   $ftp_port             = $::backup::params::ftp_port,
   $ftp_passive_mode     = $::backup::params::ftp_passive_mode,
+  # Rsync
+  $rsync_mode           = $::backup::params::rsync_mode,
+  $rsync_password_file  = $::backup::params::rsync_password_file,
 
   ## Encryptors
   $encryptor            = $::backup::params::encryptor,

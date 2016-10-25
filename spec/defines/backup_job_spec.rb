@@ -406,6 +406,35 @@ describe 'backup::job', :types=> :define do
         } }
         it { expect { is_expected.to compile }.to raise_error(/"bob" is not a boolean/)}
       end
+
+      context 'bad rsync_compress' do
+        let(:params) { {
+          :types            => 'archive',
+          :add              => 'here',
+          :storage_type     => 'rsync',
+          :storage_username => 'myuser',
+          :storage_host     => 'mysite.example.com',
+          :path             => '/there',
+          :rsync_compress   => 'bob',
+        } }
+        it { expect { is_expected.to compile }.to raise_error(/"bob" is not a boolean/)}
+      end
+
+      context 'rsync_password_file is not a string' do
+        let(:params) { {
+          :types               => 'archive',
+          :add                 => 'here',
+          :storage_type        => 'rsync',
+          :storage_username    => 'myuser',
+          :storage_host        => 'mysite.example.com',
+          :path                => '/there',
+          :rsync_compress      => true,
+          :rsync_mode          => 'rsync_daemon',
+          :rsync_password_file => true
+        } }
+        it { expect { is_expected.to compile }.to raise_error(/true is not a string/)}
+      end
+
     end # rsync
 
     context 'encryptor generic' do
@@ -1087,7 +1116,6 @@ describe 'backup::job', :types=> :define do
         } }
         it { should_not contain_concat__fragment('job1_rsync').with(:content => /server\..+user/) }
         it { should contain_concat__fragment('job1_rsync').with(:content => /server\.host\s+=\s"mysite.example.com"/) }
-        it { should contain_concat__fragment('job1_rsync').with(:content => /server\.port\s+=\s22$/) }
         it { should contain_concat__fragment('job1_rsync').with(:content => /server\.path\s+=\s"\/there"/) }
         it { should_not contain_concat__fragment('job1_rsync').with(:content => /server\.rsync_compress/) }
       end
@@ -1107,6 +1135,21 @@ describe 'backup::job', :types=> :define do
         it { should contain_concat__fragment('job1_rsync').with(:content => /server\..+user\s+=\s"myuser"/) }
         it { should contain_concat__fragment('job1_rsync').with(:content => /server\.port\s+=\s22/) }
         it { should contain_concat__fragment('job1_rsync').with(:content => /server\.mode\s+=\s:ssh/) }
+      end
+
+      context 'rsync_daemon mode' do
+        let(:params) { {
+          :types            => 'archive',
+          :add              => '/here',
+          :storage_type     => 'rsync',
+          :storage_host     => 'mysite.example.com',
+          :path             => 'there',
+          :rsync_port       => 873,
+          :rsync_mode       => 'rsync_daemon',
+          :keep             => 10,
+        } }
+        it { should contain_concat__fragment('job1_rsync').with(:content => /server\.port\s+=\s873/) }
+        it { should contain_concat__fragment('job1_rsync').with(:content => /server\.mode\s+=\s:rsync_daemon/) }
       end
     end # rsync
 
