@@ -59,6 +59,12 @@ class backup::params {
   $rsync_compress       = undef
   $rsync_password_file  = undef
 
+  ## Syncers
+  # Common
+  $syncer_type          = undef
+  # Rsync options
+  $syncer_rsync_type    = 'RSync::Push'
+
   ## Encryptors
   $encryptor            = undef
   # OpenSSL

@@ -64,6 +64,12 @@ define backup::job (
   $rsync_compress    = $::backup::rsync_compress,
   $rsync_password_file = $::backup::rsync_password_file,
 
+  ## Syncer options
+  # Common options
+  $syncer_type       = $::backup::syncer_type,
+  # Rsync
+  $syncer_rsync_type = $::backup::syncer_rsync_type,
+
   ## Encryptors
   $encryptor         = $::backup::encryptor,
   # OpenSSL
@@ -128,9 +134,9 @@ define backup::job (
     fail("[Backup::Job::${name}]: Utility paths need to be a hash: {'utility_name' => 'path'}")
   }
 
-  if !member(['archive', 'mongodb', 'mysql', 'riak', 'redis'], $_types) {
+  if !member(['archive', 'mongodb', 'mysql', 'riak', 'redis', 'syncer'], $_types) {
     $__types = join($_types, ', ')
-    fail("[Backup::Job::${name}]: Invalid types in '${__types}'.  Supported types are archive, mongodb, mysql, riak and redis")
+    fail("[Backup::Job::${name}]: Invalid types in '${__types}'.  Supported types are archive, mongodb, mysql, riak, redis, and syncer")
   }
 
   # Validate archive specific things
@@ -178,8 +184,10 @@ define backup::job (
   }
 
   # Storage
-  if !member(['s3', 'local', 'ftp', 'rsync'], $storage_type) {
-    fail("[Backup::Job::${name}]: Currently supported storage types are: ftp, local, s3, and rsync")
+  if $storage_type {
+    if !member(['s3', 'local', 'ftp', 'rsync'], $storage_type) {
+      fail("[Backup::Job::${name}]: Currently supported storage types are: ftp, local, s3, and rsync")
+    }
   }
 
   if $keep and !is_integer($keep) {
@@ -271,6 +279,42 @@ define backup::job (
     }
 
   }
+
+  # Syncers
+  if member($_types, 'syncer') {
+    if $storage_type and !member(['local'], $storage_type) {
+      fail("[Backup::Job::${name}]: When using syncers with storage you should only use local storage")
+    }
+    if member($_types, ['archive']) and !$storage_type {
+      fail("[Backup::Job::${name}]: do not use archive when no storage_type is used")
+    }
+    # Rsync
+    if $syncer_type == 'rsync' {
+      if !$storage_host or !is_string($storage_host) {
+        fail("[Backup::Job::${name}]: Parameter storage_host is required for rsync syncer")
+      }
+      if !$storage_username or !is_string($storage_username) {
+        fail("[Backup::Job::${name}]: Parameter storage_username is required for rsync syncer")
+      }
+      if $rsync_mode and !member([
+          'ssh',
+          'ssh_daemon',
+          'rsync_daemon',
+        ], $rsync_mode ) {
+          fail("[Backup::Job::${name}]: ${rsync_mode} is not a valid mode")
+        }
+      if !$add {
+        fail("[Backup::Job::${name}]: Files or directories to archive need to be specified with the 'add' parameter")
+      }
+      if !is_string($add) and !is_array($add) {
+        fail("[Backup::Job::${name}]: The add parameter takes either an individual path as a string or an array of paths")
+      }
+      if !is_string($exclude) and !is_array($exclude) {
+        fail("[Backup::Job::${name}]: The exclude parameter takes either an individual path as a string or an array of paths")
+      }
+    }#
+  }
+
 
   # Encryptor
   if $encryptor and !member(['openssl'], $encryptor) {
@@ -520,6 +564,19 @@ define backup::job (
       target  => "/etc/backup/models/${_name}.rb",
       content => template('backup/job/rsync.erb'),
       order   => '35',
+    }
+  }
+
+  if member($_types, 'syncer') {
+    if $syncer_type == 'rsync' {
+      # Template uses
+      # - $storage_username
+      # - $torage_host
+      concat::fragment { "${_name}_rsync":
+        target  => "/etc/backup/models/${_name}.rb",
+        content => template('backup/job/rsync_syncer.erb'),
+        order   => '40',
+      }
     }
   }
 

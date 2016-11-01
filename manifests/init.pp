@@ -41,6 +41,12 @@ class backup (
   $rsync_mode           = $::backup::params::rsync_mode,
   $rsync_password_file  = $::backup::params::rsync_password_file,
 
+  ## Syncers
+  # Common
+  $syncer_type          = $::backup::params::syncer_type,
+  # Rsync
+  $syncer_rsync_type    = $::backup::params::syncer_rsync_type,
+
   ## Encryptors
   $encryptor            = $::backup::params::encryptor,
   # OpenSSL

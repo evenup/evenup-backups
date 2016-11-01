@@ -346,7 +346,7 @@ describe 'backup::job', :types=> :define do
       end
     end # ftp
 
-    context 'rsync' do
+    context 'rsync storage' do
       context 'bad mode' do
         let(:params) { {
           :types            => 'archive',
@@ -436,6 +436,90 @@ describe 'backup::job', :types=> :define do
       end
 
     end # rsync
+
+    context 'syncer' do
+      context 'used with local storage only' do
+        let(:params) { {
+          :types               => ['syncer'],
+          :add                 => 'here',
+          :storage_type        => 'rsync',
+          :storage_username    => 'myuser',
+          :storage_host        => 'mysite.example.com',
+          :path                => '/there',
+        } }
+        it { expect { is_expected.to compile }.to raise_error(/When using syncers with storage you should only use local storage/)}
+      end
+
+      context 'dont use archive when no storage_type is used' do
+        let(:params) { {
+          :types               => ['archive', 'syncer'],
+          :add                 => 'here',
+          :path                => '/there',
+        } }
+        it { expect { is_expected.to compile }.to raise_error(/do not use archive when no storage_type is used/)}
+      end
+
+      context 'rsync' do
+        context 'storage_host paramater must be set' do
+          let(:params) { {
+            :types               => ['syncer'],
+            :add                 => 'here',
+            :syncer_type         => 'rsync',
+            :storage_username => 'bob',
+            :path                => '/there',
+          } }
+          it { expect { is_expected.to compile }.to raise_error(/Parameter storage_host is required for rsync/)}
+        end
+        context 'storage_username paramater must be set' do
+          let(:params) { {
+            :types        => ['syncer'],
+            :add          => 'here',
+            :syncer_type  => 'rsync',
+            :rsync_mode   => 'rsync_daemon',
+            :storage_host => 'mysite.example.com',
+            :path         => '/there',
+          } }
+          it { expect { is_expected.to compile }.to raise_error(/Parameter storage_username is required/)}
+        end
+        context 'incorrect rsync_mode' do
+          let(:params) { {
+            :types            => ['syncer'],
+            :add              => '/here',
+            :syncer_type      => 'rsync',
+            :rsync_mode       => ':rsync_daemon',
+            :storage_host     => 'mysite.example.com',
+            :storage_username => 'bob',
+            :path             => '/there'
+          } }
+          it { expect { is_expected.to compile }.to raise_error(/rsync_daemon is not a valid mode/)}
+        end
+        context 'missing add' do
+          let(:params) { {
+            :types            => ['syncer'],
+            :syncer_type      => 'rsync',
+            :rsync_mode       => 'rsync_daemon',
+            :storage_host     => 'mysite.example.com',
+            :storage_username => 'bob',
+            :path             => '/there'
+          } }
+          it { expect { is_expected.to compile }.to raise_error(/ Files or directories to archive need to be specified with the 'add' parameter/)}
+        end
+        context 'archive type with bad add' do
+          let(:params) { {
+            :types          => 'syncer',
+            :add            => { 'a' => 'b'},
+            :syncer_type      => 'rsync',
+            :rsync_mode       => 'rsync_daemon',
+            :storage_host     => 'mysite.example.com',
+            :storage_username => 'bob',
+            :path           => '/backups'
+          } }
+          it { expect { is_expected.to compile }.to raise_error(/add parameter takes either an individual path as a string or an array of paths/) }
+        end
+
+
+      end
+    end # Syncer
 
     context 'encryptor generic' do
       context 'bad encryptor' do
