@@ -9,6 +9,11 @@ group :unit_tests do
   gem 'puppet-syntax',                                              :require => false
   gem 'metadata-json-lint',                                         :require => false
   gem 'json',                                                       :require => false
+  if jasonpureversion = ENV['JSON_PURE_GEM_VERSION']
+    gem 'json_pure', jasonpureversion,                              :require => false
+  else
+    gem 'json_pure',                                                :require => false
+  end
   gem 'puppet-lint-absolute_classname-check',                       :require => false
   gem 'puppet-lint-appends-check',                                  :require => false
   gem 'puppet-lint-empty_string-check',                             :require => false

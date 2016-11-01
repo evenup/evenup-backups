@@ -276,6 +276,22 @@ String.  Bucket to store archive when using S3 storage type
 
 String.  Region to store archive when using S3 storage type
 
+##### `rsync_mode`
+
+String.  rsync mode to use with rsync storage
+
+##### `rsync_port`
+
+Integer.  Port for rsync storage model to use
+
+Default: 22
+
+##### `rsync_compress`
+
+Boolean.  Weather or not to enable rsync compression on transfer
+
+Default: undef (false)
+
 ##### `encryptor`
 
 String.  Encryptor to use on backup archive
