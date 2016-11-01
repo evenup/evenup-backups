@@ -1,0 +1,29 @@
+  ##
+  # rsync [Storage]
+  #
+  sync_with <%= @syncer_rsync_type %> do |rsync|
+<%if @storage_username and (@rsync_mode == 'ssh') -%>
+    rsync.ssh_user      = "<%= @storage_username -%>"
+<% elsif @storage_username -%>
+    rsync.rsync_user    = "<%= @storage_username -%>"
+<% end -%>
+    rsync.host          = "<%= @storage_host -%>"
+<%if @rsync_port -%>
+    rsync.port          = <%= @rsync_port %>
+<% end -%>
+    rsync.path          = "<%= @_path.sub(/(^\/)/, '\2') -%>"
+<% if @rsync_compress -%>
+    rsync.compress      = "<%= @rsync_compress %>"
+<% end -%>
+<% if @rsync_mode -%>
+    rsync.mode          = :<%= @rsync_mode %>
+<% end -%>
+<% if @rsync_password_file -%>
+    rsync.rsync_password_file = "<%= @rsync_password_file %>"
+<% end -%>
+    rsync.directories do |directory|
+<%  Array(@add).each do |element| -%>
+      directory.add '<%= element -%>'
+<% end -%>
+    end
+  end

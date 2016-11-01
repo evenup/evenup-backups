@@ -58,6 +58,17 @@ define backup::job (
   # FTP
   $ftp_port          = $::backup::ftp_port,
   $ftp_passive_mode  = $::backup::ftp_passive_mode,
+  # rsync
+  $rsync_mode        = $::backup::rsync_mode,
+  $rsync_port        = $::backup::rsync_port,
+  $rsync_compress    = $::backup::rsync_compress,
+  $rsync_password_file = $::backup::rsync_password_file,
+
+  ## Syncer options
+  # Common options
+  $syncer_type       = $::backup::syncer_type,
+  # Rsync
+  $syncer_rsync_type = $::backup::syncer_rsync_type,
 
   ## Encryptors
   $encryptor         = $::backup::encryptor,
@@ -123,9 +134,9 @@ define backup::job (
     fail("[Backup::Job::${name}]: Utility paths need to be a hash: {'utility_name' => 'path'}")
   }
 
-  if !member(['archive', 'mongodb', 'mysql', 'riak', 'redis'], $_types) {
+  if !member(['archive', 'mongodb', 'mysql', 'riak', 'redis', 'syncer'], $_types) {
     $__types = join($_types, ', ')
-    fail("[Backup::Job::${name}]: Invalid types in '${__types}'.  Supported types are archive, mongodb, mysql, riak and redis")
+    fail("[Backup::Job::${name}]: Invalid types in '${__types}'.  Supported types are archive, mongodb, mysql, riak, redis, and syncer")
   }
 
   # Validate archive specific things
@@ -173,8 +184,10 @@ define backup::job (
   }
 
   # Storage
-  if !member(['s3', 'local', 'ftp'], $storage_type) {
-    fail("[Backup::Job::${name}]: Currently supported storage types are: ftp, local, and s3")
+  if $storage_type {
+    if !member(['s3', 'local', 'ftp', 'rsync'], $storage_type) {
+      fail("[Backup::Job::${name}]: Currently supported storage types are: ftp, local, s3, and rsync")
+    }
   }
 
   if $keep and !is_integer($keep) {
@@ -186,7 +199,7 @@ define backup::job (
   }
 
   # local and ftp require path parameter
-  if member(['ftp', 'local'], $storage_type) {
+  if member(['ftp', 'local', 'rsync'], $storage_type) {
     if !$path {
       fail("[Backup::Job::${name}]: Path parameter is required with storage_type => ${storage_type}")
     }
@@ -242,6 +255,66 @@ define backup::job (
 
     validate_bool($ftp_passive_mode)
   }
+
+  if $storage_type == 'rsync' {
+    if $rsync_mode and !member([
+        'ssh',
+        'ssh_daemon',
+        'rsync_daemon',
+      ], $rsync_mode ) {
+        fail("[Backup::Job::${name}]: ${rsync_mode} is not a valid mode")
+      }
+    if !$storage_host or !is_string($storage_host) {
+      fail("[Backup::Job::${name}]: Parameter storage_host is required for rsync storage")
+    }
+    if $rsync_port and !is_integer($rsync_port) {
+      fail("[Backup::Job::${name}]: rsync_port must be an integer.  (Got: ${rsync_port})")
+    }
+
+    if $rsync_compress {
+      validate_bool($rsync_compress)
+    }
+    if $rsync_password_file {
+      validate_string($rsync_password_file)
+    }
+
+  }
+
+  # Syncers
+  if member($_types, 'syncer') {
+    if $storage_type and !member(['local'], $storage_type) {
+      fail("[Backup::Job::${name}]: When using syncers with storage you should only use local storage")
+    }
+    if member($_types, ['archive']) and !$storage_type {
+      fail("[Backup::Job::${name}]: do not use archive when no storage_type is used")
+    }
+    # Rsync
+    if $syncer_type == 'rsync' {
+      if !$storage_host or !is_string($storage_host) {
+        fail("[Backup::Job::${name}]: Parameter storage_host is required for rsync syncer")
+      }
+      if !$storage_username or !is_string($storage_username) {
+        fail("[Backup::Job::${name}]: Parameter storage_username is required for rsync syncer")
+      }
+      if $rsync_mode and !member([
+          'ssh',
+          'ssh_daemon',
+          'rsync_daemon',
+        ], $rsync_mode ) {
+          fail("[Backup::Job::${name}]: ${rsync_mode} is not a valid mode")
+        }
+      if !$add {
+        fail("[Backup::Job::${name}]: Files or directories to archive need to be specified with the 'add' parameter")
+      }
+      if !is_string($add) and !is_array($add) {
+        fail("[Backup::Job::${name}]: The add parameter takes either an individual path as a string or an array of paths")
+      }
+      if !is_string($exclude) and !is_array($exclude) {
+        fail("[Backup::Job::${name}]: The exclude parameter takes either an individual path as a string or an array of paths")
+      }
+    }#
+  }
+
 
   # Encryptor
   if $encryptor and !member(['openssl'], $encryptor) {
@@ -478,6 +551,32 @@ define backup::job (
       target  => "/etc/backup/models/${_name}.rb",
       content => template('backup/job/ftp.erb'),
       order   => '35',
+    }
+  } elsif $storage_type == 'rsync' {
+    # Template uses
+    # - $server_username
+    # - $server_ip
+    # - $server_port
+    # - $server_compress
+    # - $server_mode
+    # - $path
+    concat::fragment { "${_name}_rsync":
+      target  => "/etc/backup/models/${_name}.rb",
+      content => template('backup/job/rsync.erb'),
+      order   => '35',
+    }
+  }
+
+  if member($_types, 'syncer') {
+    if $syncer_type == 'rsync' {
+      # Template uses
+      # - $storage_username
+      # - $torage_host
+      concat::fragment { "${_name}_rsync":
+        target  => "/etc/backup/models/${_name}.rb",
+        content => template('backup/job/rsync_syncer.erb'),
+        order   => '40',
+      }
     }
   }
 
